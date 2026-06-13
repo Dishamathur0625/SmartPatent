@@ -1,0 +1,19 @@
+body{
+    font-family: Arial;
+    margin:0;
+    background:#f4f4f4;
+}
+
+nav{
+    background:#2c3e50;
+    color:white;
+    padding:15px;
+}
+
+.container{
+    padding:30px;
+}
+
+a{
+    margin-right:20px;
+}

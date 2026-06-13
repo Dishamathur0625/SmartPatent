@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patent Questionnaire</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input[type="text"], input[type="file"], textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea { min-height: 120px; resize: vertical; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>SmartPatent - Patent Draft Generator</h2>
+
+    <form action="/generate_draft" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Title of Invention</label>
+            <input type="text" name="title" required>
+        </div>
+
+        <div class="form-group">
+            <label>Field of Technology</label>
+            <textarea name="field" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Problem Being Solved</label>
+            <textarea name="problem" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Existing Solutions</label>
+            <textarea name="existing_solution"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Proposed Solution</label>
+            <textarea name="proposed_solution"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Working of the Invention</label>
+            <textarea name="working"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Advantages</label>
+            <textarea name="advantages"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Components Used</label>
+            <textarea name="components"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Possible Applications</label>
+            <textarea name="applications"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Upload Diagram (optional)</label>
+            <input type="file" name="uploaded_diagram" accept=".png,.jpg,.jpeg,.webp">
+        </div>
+
+        <button type="submit">Generate Patent Draft</button>
+    </form>
+</body>
+</html>

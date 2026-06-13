@@ -1,0 +1,9 @@
+Flask
+python-dotenv
+mysql-connector-python
+requests
+scikit-learn
+google-genai
+python-docx
+reportlab
+Pillow

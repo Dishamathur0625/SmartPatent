@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generated Patent Draft</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f7f9fc;
+            color: #222;
+        }
+
+        h2, h3 {
+            color: #1f3b5b;
+        }
+
+        .section {
+            background: #ffffff;
+            border: 1px solid #d9e2ec;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 20px;
+            background: #e8f1ff;
+            color: #1a4fa3;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 520px;
+            padding: 12px;
+            font-size: 15px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #fcfcfc;
+            resize: vertical;
+        }
+
+        .card {
+            border: 1px solid #d9e2ec;
+            border-radius: 10px;
+            padding: 14px;
+            margin: 12px 0;
+            background: #fff;
+        }
+
+        .debug {
+            white-space: pre-wrap;
+            background: #f8fafc;
+            border: 1px solid #d9e2ec;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .small {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            background: #1f5fbf;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn.secondary {
+            background: #64748b;
+        }
+
+        .btn.success {
+            background: #15803d;
+        }
+
+        .btn.warning {
+            background: #b45309;
+        }
+
+        .btn.danger {
+            background: #b91c1c;
+        }
+
+        img.diagram {
+            max-width: 700px;
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+        }
+
+        ul {
+            margin-top: 8px;
+        }
+
+        .message-box {
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .message-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .message-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <h2>Generated Patent Draft</h2>
+
+    <div class="section">
+        <h3>Preliminary Prior-Art Analysis</h3>
+        <div class="status-badge">{{ prior_art_analysis.status }}</div>
+        <p><strong>Overall Similarity Score:</strong> {{ prior_art_analysis.similarity_score }}%</p>
+        <p><strong>Explanation:</strong> {{ prior_art_analysis.analysis_text }}</p>
+        <p class="small"><em>This is a preliminary AI-assisted prior-art analysis and not a legal patentability opinion.</em></p>
+    </div>
+
+    {% if diagram_url %}
+    <div class="section">
+        <h3>Uploaded Diagram</h3>
+        <img class="diagram" src="{{ diagram_url }}" alt="Uploaded patent diagram">
+        <p><strong>{{ diagram_caption }}</strong></p>
+        <p>{{ drawing_description }}</p>
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <h3>Generated Draft</h3>
+
+        <textarea id="draftText" readonly>{{ draft }}</textarea>
+
+        <div class="btn-row">
+            <button type="button" class="btn" onclick="enableEdit()">Edit Draft</button>
+            <button type="button" class="btn success" onclick="saveDraft()" id="saveBtn" style="display:none;">Save Changes</button>
+            <button type="button" class="btn secondary" onclick="cancelEdit()" id="cancelBtn" style="display:none;">Cancel</button>
+            <button type="button" class="btn warning" onclick="regenerateDraft()">Regenerate Draft</button>
+
+            <a class="btn" href="/download_draft/txt/{{ draft_id }}">Download TXT</a>
+            <a class="btn" href="/download_draft/docx/{{ draft_id }}">Download DOCX</a>
+            <a class="btn" href="/download_draft/pdf/{{ draft_id }}">Download PDF</a>
+        </div>
+
+        <div id="messageBox" class="message-box"></div>
+    </div>
+
+    <div class="section">
+        <h3>Top Related Patents</h3>
+        {% if related_patents %}
+            {% for item in related_patents %}
+                <div class="card">
+                    <strong>{{ item.patent_title }}</strong><br><br>
+
+                    <strong>Patent/Application No:</strong> {{ item.patent_number }}<br>
+
+                    <strong>Patent URL:</strong>
+                    {% if item.patent_url %}
+                        <a href="{{ item.patent_url }}" target="_blank">{{ item.patent_url }}</a><br>
+                    {% else %}
+                        Not available<br>
+                    {% endif %}
+
+                    <strong>Final Similarity:</strong> {{ item.similarity_percent }}%<br>
+
+                    {% if item.lens_component_percent is defined %}
+                        <strong>Lens Relevance:</strong> {{ item.lens_component_percent }}%<br>
+                        <strong>Title Similarity:</strong> {{ item.title_component_percent }}%<br>
+                        <strong>Abstract Similarity:</strong> {{ item.abstract_component_percent }}%<br>
+                    {% endif %}
+
+                    {% if item.matched_query %}
+                        <strong>Matched Query:</strong> {{ item.matched_query }}<br>
+                    {% endif %}
+
+                    <br>
+                    <strong>Abstract:</strong><br>
+                    {{ item.abstract_text }}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No related patents were retrieved.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h3>Lens Search Debug</h3>
+
+        <p><strong>Primary Query:</strong> {{ lens_query }}</p>
+
+        {% if lens_fingerprint %}
+            <p><strong>Extracted Fingerprint:</strong></p>
+            <div class="debug">{{ lens_fingerprint }}</div>
+        {% endif %}
+
+        {% if lens_queries %}
+            <p><strong>Attempted Queries:</strong></p>
+            <ul>
+                {% for q in lens_queries %}
+                    <li>{{ q }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if lens_debug_info %}
+            <p><strong>Per-query Debug Info:</strong></p>
+            {% for info in lens_debug_info %}
+                <div class="debug">
+Query: {{ info.query }}
+Status: {{ info.status_code }}
+{% if info.hit_count is defined %}Hit Count: {{ info.hit_count }}{% endif %}
+Response Preview: {{ info.response_preview }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <p><strong>Last Payload Sent:</strong></p>
+        <div class="debug">{{ lens_payload }}</div>
+
+        {% if lens_error %}
+            <p style="color:red;"><strong>Lens Error:</strong> {{ lens_error }}</p>
+            <p class="small"><em>No result from Lens should be treated as retrieval failure, not proof of novelty.</em></p>
+        {% else %}
+            <p style="color:green;"><strong>Lens request completed.</strong></p>
+        {% endif %}
+    </div>
+
+    <a class="btn" href="/questionnaire">Generate Another Draft</a>
+
+    <script>
+        let draftTextarea = document.getElementById("draftText");
+        let originalDraft = draftTextarea.value;
+
+        function showMessage(message, isSuccess = true) {
+            const box = document.getElementById("messageBox");
+            box.style.display = "block";
+            box.textContent = message;
+            box.className = "message-box " + (isSuccess ? "message-success" : "message-error");
+        }
+
+        function enableEdit() {
+            draftTextarea.removeAttribute("readonly");
+            document.getElementById("saveBtn").style.display = "inline-block";
+            document.getElementById("cancelBtn").style.display = "inline-block";
+            showMessage("Edit mode enabled. You can now modify the draft.", true);
+        }
+
+        function cancelEdit() {
+            draftTextarea.value = originalDraft;
+            draftTextarea.setAttribute("readonly", true);
+            document.getElementById("saveBtn").style.display = "none";
+            document.getElementById("cancelBtn").style.display = "none";
+            showMessage("Changes cancelled.", true);
+        }
+
+        async function saveDraft() {
+            const formData = new FormData();
+            formData.append("draft_text", draftTextarea.value);
+
+            try {
+                const response = await fetch("/edit_draft/{{ draft_id }}", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    originalDraft = draftTextarea.value;
+                    draftTextarea.setAttribute("readonly", true);
+                    document.getElementById("saveBtn").style.display = "none";
+                    document.getElementById("cancelBtn").style.display = "none";
+                    showMessage(result.message, true);
+                } else {
+                    showMessage(result.message || "Failed to save draft.", false);
+                }
+            } catch (error) {
+                showMessage("Error while saving draft.", false);
+            }
+        }
+
+        async function regenerateDraft() {
+            try {
+                const response = await fetch("/regenerate_draft/{{ draft_id }}", {
+                    method: "POST"
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    draftTextarea.value = result.draft_text;
+                    originalDraft = result.draft_text;
+                    draftTextarea.setAttribute("readonly", true);
+                    document.getElementById("saveBtn").style.display = "none";
+                    document.getElementById("cancelBtn").style.display = "none";
+                    showMessage(result.message, true);
+                } else {
+                    showMessage(result.message || "Failed to regenerate draft.", false);
+                }
+            } catch (error) {
+                showMessage("Error while regenerating draft.", false);
+            }
+        }
+    </script>
+</body>
+</html>
