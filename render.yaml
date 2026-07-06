@@ -1,0 +1,42 @@
+# Infrastructure as Code (IaC) Deployment Blueprint for Render
+services:
+  # Web service running the SmartPatent Flask app via Docker
+  - type: web
+    name: smartpatent-app
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free # Can be upgraded to starter/standard in production
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: MYSQL_HOST
+        fromDatabase:
+          name: smartpatent-db
+          property: host
+      - key: MYSQL_USER
+        fromDatabase:
+          name: smartpatent-db
+          property: user
+      - key: MYSQL_PASSWORD
+        fromDatabase:
+          name: smartpatent-db
+          property: password
+      - key: MYSQL_DATABASE
+        fromDatabase:
+          name: smartpatent-db
+          property: database
+      - key: MYSQL_POOL_SIZE
+        value: 10
+      - key: GEMINI_API_KEY
+        sync: false # Set inside Render console settings
+      - key: LENS_API_KEY
+        sync: false # Set inside Render console settings
+
+# Managed MySQL Database instance
+databases:
+  - name: smartpatent-db
+    plan: free
+    databaseName: smartpatent
+    user: root

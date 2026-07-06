@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="edit-draft-container">
+    <div class="header-section">
+        <h2>Edit Patent Draft: {{ draft.title or "Untitled Draft" }}</h2>
+        <a href="/dashboard" class="btn secondary">Cancel & Back</a>
+    </div>
+
+    <div class="editor-card">
+        <form id="editDraftForm" method="POST" onsubmit="submitForm(event)">
+            <div class="form-group">
+                <label for="draftText">Patent Draft Content</label>
+                <textarea id="draftText" name="draft_text" required>{{ draft.draft_text }}</textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn success">Save Draft Changes</button>
+                <a href="/dashboard" class="btn secondary">Cancel</a>
+            </div>
+        </form>
+        <div id="messageBox" class="message-box"></div>
+    </div>
+</div>
+
+<script>
+async function submitForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const msgBox = document.getElementById("messageBox");
+    
+    msgBox.style.display = "none";
+    
+    try {
+        const response = await fetch(window.location.pathname, {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            msgBox.textContent = result.message;
+            msgBox.className = "message-box message-success";
+            msgBox.style.display = "block";
+            setTimeout(() => {
+                window.location.href = "/dashboard";
+            }, 1500);
+        } else {
+            msgBox.textContent = result.message || "An error occurred while saving.";
+            msgBox.className = "message-box message-error";
+            msgBox.style.display = "block";
+        }
+    } catch (error) {
+        msgBox.textContent = "Network error. Failed to save changes.";
+        msgBox.className = "message-box message-error";
+        msgBox.style.display = "block";
+    }
+}
+</script>
+
+<style>
+.edit-draft-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+.editor-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1e293b;
+}
+.form-group textarea {
+    width: 100%;
+    min-height: 500px;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: Courier, monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+}
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+.message-box {
+    margin-top: 15px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: none;
+    font-weight: 500;
+}
+.message-success {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+.message-error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+</style>
+{% endblock %}

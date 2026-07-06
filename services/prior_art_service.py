@@ -41,36 +41,43 @@ def rank_patents_tfidf(data, related_patents):
 
     ranked = []
 
-    for patent in related_patents:
-        patent_title = clean_text(patent.get("patent_title", ""))
-        patent_abstract = clean_text(patent.get("abstract_text", ""))
+    # Compile global title and abstract corpora
+    title_docs = [invention_title] + [clean_text(p.get("patent_title", "")) for p in related_patents]
+    abstract_docs = [invention_text] + [clean_text(p.get("abstract_text", "")) for p in related_patents]
 
-        docs = [
-            invention_title,
-            patent_title,
-            invention_text,
-            patent_abstract
-        ]
+    try:
+        # Fit vectorizers globally once over the entire retrieved corpus
+        vectorizer_title = TfidfVectorizer(stop_words="english")
+        tfidf_titles = vectorizer_title.fit_transform(title_docs)
 
-        try:
-            vectorizer = TfidfVectorizer(stop_words="english")
-            tfidf_matrix = vectorizer.fit_transform(docs)
+        vectorizer_abstract = TfidfVectorizer(stop_words="english")
+        tfidf_abstracts = vectorizer_abstract.fit_transform(abstract_docs)
 
-            title_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-            abstract_sim = cosine_similarity(tfidf_matrix[2:3], tfidf_matrix[3:4])[0][0]
-        except Exception:
-            title_sim = 0.0
-            abstract_sim = 0.0
+        user_title_vec = tfidf_titles[0:1]
+        user_abstract_vec = tfidf_abstracts[0:1]
 
-        final_score = (0.45 * title_sim) + (0.55 * abstract_sim)
+        for i, patent in enumerate(related_patents, start=1):
+            title_sim = cosine_similarity(user_title_vec, tfidf_titles[i:i+1])[0][0]
+            abstract_sim = cosine_similarity(user_abstract_vec, tfidf_abstracts[i:i+1])[0][0]
 
-        item = dict(patent)
-        item["title_component_percent"] = round(title_sim * 100, 2)
-        item["abstract_component_percent"] = round(abstract_sim * 100, 2)
-        item["lens_component_percent"] = 0
-        item["similarity_percent"] = round(final_score * 100, 2)
+            final_score = (0.45 * title_sim) + (0.55 * abstract_sim)
 
-        ranked.append(item)
+            item = dict(patent)
+            item["title_component_percent"] = round(title_sim * 100, 2)
+            item["abstract_component_percent"] = round(abstract_sim * 100, 2)
+            item["lens_component_percent"] = 0
+            item["similarity_percent"] = round(final_score * 100, 2)
+
+            ranked.append(item)
+    except Exception:
+        # Graceful fallback in case of processing errors
+        for patent in related_patents:
+            item = dict(patent)
+            item["title_component_percent"] = 0.0
+            item["abstract_component_percent"] = 0.0
+            item["lens_component_percent"] = 0
+            item["similarity_percent"] = 0.0
+            ranked.append(item)
 
     ranked.sort(key=lambda x: x["similarity_percent"], reverse=True)
     return ranked[:5]

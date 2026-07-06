@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: smartpatent_web
+    restart: always
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-smartpatent_production_secret_key}
+      - MYSQL_HOST=db
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-smartpatent}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - LENS_API_KEY=${LENS_API_KEY}
+      - MYSQL_POOL_SIZE=15
+      - MYSQL_POOL_NAME=smartpatent_pool
+    ports:
+      - "8000:8000"
+    volumes:
+      - web_uploads:/app/uploads
+      - web_drafts:/app/saved_drafts
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    container_name: smartpatent_db
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-smartpatent}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:
+  web_uploads:
+  web_drafts:

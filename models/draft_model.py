@@ -108,3 +108,37 @@ class DraftModel:
 
         cursor.close()
         conn.close()
+
+    def get_draft_versions(self, draft_id):
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT version_no, draft_text, created_at 
+        FROM draft_versions 
+        WHERE draft_id = %s 
+        ORDER BY version_no DESC
+        """
+        cursor.execute(query, (draft_id,))
+        versions = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+        return versions
+
+    def get_drafts_by_user_id(self, user_id):
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT id, title, field, version_no, created_at 
+        FROM drafts 
+        WHERE user_id = %s 
+        ORDER BY created_at DESC
+        """
+        cursor.execute(query, (user_id,))
+        drafts = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+        return drafts

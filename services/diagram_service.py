@@ -15,7 +15,33 @@ def save_uploaded_diagram(file_obj):
     if not file_obj or file_obj.filename == "":
         return ""
 
+    # 1. Validate file extension
     ext = os.path.splitext(file_obj.filename)[1].lower()
+    if ext not in ['.png', '.jpg', '.jpeg', '.webp']:
+        raise ValueError("Invalid file extension. Only PNG, JPG, JPEG, and WEBP diagrams are allowed.")
+
+    # 2. Validate file size (limit to 5MB)
+    try:
+        file_obj.seek(0, os.SEEK_END)
+        size = file_obj.tell()
+        file_obj.seek(0)
+    except Exception:
+        # Fallback if seek is unsupported
+        size = len(file_obj.read())
+        file_obj.seek(0)
+
+    if size > 5 * 1024 * 1024:
+        raise ValueError("The uploaded diagram file exceeds the 5MB size limit.")
+
+    # 3. Verify actual image payload using Pillow
+    try:
+        img = Image.open(file_obj)
+        img.verify()
+        file_obj.seek(0) # Reset stream pointer after verification
+    except Exception:
+        raise ValueError("Invalid image file payload. The file is corrupted or malicious.")
+
+    # 4. Generate secure unique filename and save
     unique_name = f"{uuid.uuid4().hex}{ext}"
     save_path = os.path.join(Config.UPLOAD_DIAGRAM_FOLDER, unique_name)
     file_obj.save(save_path)

@@ -1,76 +1,84 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Patent Questionnaire</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 30px; }
-        .form-group { margin-bottom: 16px; }
-        label { display: block; margin-bottom: 6px; font-weight: bold; }
-        input[type="text"], input[type="file"], textarea {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        textarea { min-height: 120px; resize: vertical; }
-        button { padding: 12px 24px; font-size: 16px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h2>SmartPatent - Patent Draft Generator</h2>
+{% extends "layout.html" %}
 
-    <form action="/generate_draft" method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-            <label>Title of Invention</label>
-            <input type="text" name="title" required>
-        </div>
+{% block content %}
+<div class="questionnaire-container" style="max-width: 800px; margin: 0 auto;">
+    <div class="glass-card">
+        <h2 style="margin-bottom: 10px;">SmartPatent - Patent Draft Generator</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">
+            Provide the technical details of your invention. Our engine will query databases and compile a formal patent draft.
+        </p>
 
-        <div class="form-group">
-            <label>Field of Technology</label>
-            <textarea name="field" required></textarea>
-        </div>
+        <form action="/generate_draft" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Title of Invention</label>
+                <input type="text" name="title" required placeholder="e.g. Smart Volatile Organic Compound sensor for food spoilage detection">
+            </div>
 
-        <div class="form-group">
-            <label>Problem Being Solved</label>
-            <textarea name="problem" required></textarea>
-        </div>
+            <div class="form-group">
+                <label>Field of Technology</label>
+                <textarea name="field" required placeholder="Detail the technical domain this invention falls under (e.g. Internet of Things, agricultural sensors, gas detection)."></textarea>
+            </div>
 
-        <div class="form-group">
-            <label>Existing Solutions</label>
-            <textarea name="existing_solution"></textarea>
-        </div>
+            <div class="form-group">
+                <label>Problem Being Solved</label>
+                <textarea name="problem" required placeholder="What deficiency or limitation in existing technology does your invention address?"></textarea>
+            </div>
 
-        <div class="form-group">
-            <label>Proposed Solution</label>
-            <textarea name="proposed_solution"></textarea>
-        </div>
+            <div class="form-group">
+                <label>Existing Solutions</label>
+                <textarea name="existing_solution" placeholder="Describe current methods, solutions, or systems and their disadvantages."></textarea>
+            </div>
 
-        <div class="form-group">
-            <label>Working of the Invention</label>
-            <textarea name="working"></textarea>
-        </div>
+            <div class="form-group">
+                <label>Proposed Solution</label>
+                <textarea name="proposed_solution" placeholder="Explain your concept and how it resolves the target problem."></textarea>
+            </div>
 
-        <div class="form-group">
-            <label>Advantages</label>
-            <textarea name="advantages"></textarea>
-        </div>
+            <div class="form-group">
+                <label>Working of the Invention</label>
+                <textarea name="working" placeholder="Step-by-step description of the operational flow or functional components in detail."></textarea>
+            </div>
 
-        <div class="form-group">
-            <label>Components Used</label>
-            <textarea name="components"></textarea>
-        </div>
+            <div class="form-group">
+                <label>Advantages</label>
+                <textarea name="advantages" placeholder="List the core benefits, performance enhancements, safety increases, or cost savings."></textarea>
+            </div>
 
-        <div class="form-group">
-            <label>Possible Applications</label>
-            <textarea name="applications"></textarea>
-        </div>
+            <div class="form-group">
+                <label>Components Used</label>
+                <textarea name="components" placeholder="List key parts, chemical agents, code blocks, mechanical parts, or sensor devices."></textarea>
+            </div>
 
-        <div class="form-group">
-            <label>Upload Diagram (optional)</label>
-            <input type="file" name="uploaded_diagram" accept=".png,.jpg,.jpeg,.webp">
-        </div>
+            <div class="form-group">
+                <label>Possible Applications</label>
+                <textarea name="applications" placeholder="In what products, industries, fields, or systems can this invention be deployed?"></textarea>
+            </div>
 
-        <button type="submit">Generate Patent Draft</button>
-    </form>
-</body>
-</html>
+            <div class="form-group">
+                <label>Upload Invention Diagram (Optional)</label>
+                <label for="file-upload" class="custom-file-upload">
+                    Choose Diagram File (PNG, JPG, WEBP)
+                </label>
+                <input id="file-upload" type="file" name="uploaded_diagram" accept=".png,.jpg,.jpeg,.webp" onchange="updateFileName(this)">
+                <span id="file-name" style="margin-left: 15px; color: var(--text-secondary); font-size: 0.9rem;"></span>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 25px;">
+                <a href="/dashboard" class="btn secondary">Cancel</a>
+                <button type="submit" class="btn">Generate Patent Draft</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function updateFileName(input) {
+    const fileNameSpan = document.getElementById("file-name");
+    if (input.files && input.files[0]) {
+        fileNameSpan.textContent = input.files[0].name;
+    } else {
+        fileNameSpan.textContent = "";
+    }
+}
+</script>
+{% endblock %}

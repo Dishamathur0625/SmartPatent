@@ -4,7 +4,8 @@ import os
 
 from docx import Document
 from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 
 from services.lens_service import search_lens_patents
 from services.prior_art_service import analyze_prior_art
@@ -160,29 +161,46 @@ def generate_draft():
         )
 
 
-@patent.route("/edit_draft/<int:draft_id>", methods=["POST"])
+@patent.route("/edit_draft/<int:draft_id>", methods=["GET", "POST"])
 def edit_draft(draft_id):
     if "user_id" not in session:
-        return {"success": False, "message": "Unauthorized"}
+        if request.method == "POST":
+            return {"success": False, "message": "Unauthorized"}, 401
+        return redirect("/login")
 
-    new_text = request.form.get("draft_text", "").strip()
+    draft_record = draft_model.get_draft_by_id(draft_id)
+    if not draft_record:
+        if request.method == "POST":
+            return {"success": False, "message": "Draft not found"}, 404
+        return "Draft not found", 404
+        
+    if draft_record["user_id"] != session["user_id"]:
+        if request.method == "POST":
+            return {"success": False, "message": "Forbidden: You do not own this draft"}, 403
+        return "Forbidden: You do not own this draft", 403
 
-    if not new_text:
-        return {"success": False, "message": "Draft text cannot be empty"}
+    if request.method == "POST":
+        new_text = request.form.get("draft_text", "").strip()
+        if not new_text:
+            return {"success": False, "message": "Draft text cannot be empty"}, 400
 
-    draft_model.update_draft_text(draft_id, new_text, True)
+        draft_model.update_draft_text(draft_id, new_text, True)
+        return {"success": True, "message": "Draft updated successfully"}
 
-    return {"success": True, "message": "Draft updated successfully"}
+    return render_template("edit_draft.html", draft=draft_record)
 
 
 @patent.route("/regenerate_draft/<int:draft_id>", methods=["POST"])
 def regenerate_draft(draft_id):
     if "user_id" not in session:
-        return {"success": False, "message": "Unauthorized"}
+        return {"success": False, "message": "Unauthorized"}, 401
 
     draft_record = draft_model.get_draft_by_id(draft_id)
     if not draft_record:
-        return {"success": False, "message": "Draft not found"}
+        return {"success": False, "message": "Draft not found"}, 404
+        
+    if draft_record["user_id"] != session["user_id"]:
+        return {"success": False, "message": "Forbidden: You do not own this draft"}, 403
 
     # Rebuild prompt from original stored data
     data = {
@@ -230,6 +248,9 @@ def download_draft_txt(draft_id):
     draft_record = draft_model.get_draft_by_id(draft_id)
     if not draft_record:
         return "Draft not found", 404
+        
+    if draft_record["user_id"] != session["user_id"]:
+        return "Forbidden: You do not own this draft", 403
 
     return Response(
         draft_record["draft_text"],
@@ -246,6 +267,9 @@ def download_draft_docx(draft_id):
     draft_record = draft_model.get_draft_by_id(draft_id)
     if not draft_record:
         return "Draft not found", 404
+        
+    if draft_record["user_id"] != session["user_id"]:
+        return "Forbidden: You do not own this draft", 403
 
     folder = ensure_user_draft_folder(session["user_id"])
     filepath = os.path.join(folder, f"draft_{draft_id}.docx")
@@ -266,32 +290,47 @@ def download_draft_pdf(draft_id):
     draft_record = draft_model.get_draft_by_id(draft_id)
     if not draft_record:
         return "Draft not found", 404
+        
+    if draft_record["user_id"] != session["user_id"]:
+        return "Forbidden: You do not own this draft", 403
 
     folder = ensure_user_draft_folder(session["user_id"])
     filepath = os.path.join(folder, f"draft_{draft_id}.pdf")
 
-    c = canvas.Canvas(filepath, pagesize=A4)
-    width, height = A4
+    # Use SimpleDocTemplate for professional rendering with word wrapping
+    doc = SimpleDocTemplate(filepath, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=22,
+        spaceAfter=15
+    )
+    body_style = ParagraphStyle(
+        'DocBody',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        leading=14,
+        spaceAfter=8
+    )
 
-    y = height - 50
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, y, draft_record["title"])
+    story = []
+    story.append(Paragraph(draft_record["title"] or "Untitled Patent Draft", title_style))
+    story.append(Spacer(1, 10))
 
-    y -= 30
-    c.setFont("Helvetica", 10)
+    # Split lines by newlines and add paragraph blocks
+    paragraphs = (draft_record["draft_text"] or "").split("\n\n")
+    for p_text in paragraphs:
+        p_text_html = p_text.strip().replace("\n", "<br/>")
+        if p_text_html:
+            story.append(Paragraph(p_text_html, body_style))
+            story.append(Spacer(1, 6))
 
-    lines = draft_record["draft_text"].split("\n")
-    for line in lines:
-        if y < 50:
-            c.showPage()
-            y = height - 50
-            c.setFont("Helvetica", 10)
-
-        c.drawString(50, y, line[:110])
-        y -= 15
-
-    c.save()
-
+    doc.build(story)
     return send_file(filepath, as_attachment=True)
 
 
@@ -299,6 +338,13 @@ def download_draft_pdf(draft_id):
 def draft_versions(draft_id):
     if "user_id" not in session:
         return redirect("/login")
+
+    draft_record = draft_model.get_draft_by_id(draft_id)
+    if not draft_record:
+        return "Draft not found", 404
+        
+    if draft_record["user_id"] != session["user_id"]:
+        return "Forbidden: You do not own this draft", 403
 
     versions = draft_model.get_draft_versions(draft_id)
     return render_template("draft_versions.html", versions=versions, draft_id=draft_id)

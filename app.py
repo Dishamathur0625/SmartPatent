@@ -2,6 +2,7 @@ from flask import Flask, render_template, session, redirect, send_from_directory
 from config import Config
 from routes.auth_routes import auth
 from routes.patent_routes import patent
+from models.draft_model import DraftModel
 from dotenv import load_dotenv
 import webbrowser
 import threading
@@ -23,11 +24,14 @@ def home():
     return render_template("index.html")
 
 
+draft_model = DraftModel()
+
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
         return redirect("/login")
-    return render_template("dashboard.html")
+    user_drafts = draft_model.get_drafts_by_user_id(session["user_id"])
+    return render_template("dashboard.html", drafts=user_drafts)
 
 
 @app.route("/uploads/<path:filename>")
